@@ -1,0 +1,47 @@
+---
+title: "Structural Variations"
+author: "MK"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+#### _Translational Bioinformatics_ in PLOS Computational Biology
+
+### Introduction
+GWAS have identified common __germline__ DNA variants that are associated with various common human diseases. GWAS focussed so far on SNPs that have a frequency of >5% in the population ("common disease, common variant").  GWAS only explain only a small fraction of the heritability of many traits. 
+For instance, the HapMap project provides catalogs of common SNPs in several human populations.
+
+Cancer Genome sequencing studies have cataloged numerous __somatic__ mutations. The somatic mutations are rarely shared between many cancer cohorts (even patients of same cancer subtype). This makes it difficult to distinguish driver mutations from pass-by mutations.
+
+
+### Germline and Somatic Structural Variation (SV)
+SVs are an important contributor to genome variation that are not uncommon. SVs include both
+
+  1. copy number variants
+      * duplications
+      * deletions
+  2. balanced rearrangements
+      * inversions
+      * translocations
+
+#### Germline SV
+It has become clear that germline SVs encompass more bases than SNVs. The Database of Genomic Variants lists 66K CNVs and 1000 inversion variants in the human genome. CNVs are believed to account for ~20% of genetic variation in gene expression, having little overlap with SNP-related variation and can affect the expression of genes up to 300kb away from the variant (Lower et al, 2009).
+
+#### Somatic SV and Cancer
+Cancer can be seen as a micro-evolutionary process within a population of cells.
+SVs are important somatic changes for cancer, for instance BCR/ABL fusion gene through a translocation in CML or a translocation activates the MYC oncogene by fusing it with a stronger promoter in Burkitt's lymphoma. Solid tumors often have a complex karyotype and show extensive re-arrangements. This might result of a breakdown of DNA repair machinery.
+
+#### Mechanisms of SV
+A distinguishing feature of the different mechanisms is the amount of sequence similarity (homology) at the breakpoints of the SV.
+
+  1. Non-homologous end-joining (__NHEJ__): There is little or no sequence similarity. Result from random (or near random) double-stranded breaks in DNA. Maybe due to exposure to external DNA damaging agents (e.g. ultraviolet radiation or chemotheraphy drugs). Aberrant repair of these breaks result in SVs. Sometimes, NHEJ events have some degree of microhomology (2-25bp of similarity) at their breakpoints.
+  2. Non-allelic homologous recombination (__NAHR__) occurs with high sequence homology. This mechanism is similar to the normal biological process of homologous recombination that occurs during meiois and exchanges DNA between two homologous chromosomes. But NAHR is a rearrangement that occurs between homologous sequences that are not the same allele  on homologous chromosomes. Rather, NAHR occurs between repetitive sequences on the genome. 
+  Alu elements of 300bp to segmental duplications (low copy repeats) of 10-100kb. >23% of deletions were a result of NAHR [1000genomes].
+  3. Fork stalling and template swithcing (FoSTeS) have also been proposed.
+
+It is unclear what are the contributions of these different SV-mechanisms.
+

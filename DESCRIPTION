@@ -1,0 +1,41 @@
+Package: svmod
+Type: Package
+Title: Calling somatic SVs in exome DNA-sequencing data (SV2 version)
+Version: 0.6.19
+Date: 2016-02-11
+Author: Matthias Kuhn
+Maintainer: Matthias Kuhn <matthias.kuhn@tu-dresden.de>
+Description: Small structural variations (SV) are genetic mutations that
+    comprise between 50 and 300 nucleotides. Somatic mutations in a tumor context occur
+    in tumor cells but not in healthy cells. This package focusses on finding small
+    somatic SVs within tumor/normal exome sequencing data.
+License: GPL3
+Imports:
+    Biostrings,
+    bitops,
+    doParallel,
+    dplyr (>= 0.3.0),
+    e1071,
+    foreach,
+    GenomicAlignments,
+    GenomicFiles,
+    GenomicRanges,
+    kknn,
+    logging,
+    magrittr,
+    mlr (>= 2.8.0),
+    parallelMap,
+    randomForest,
+    RcppRoll,
+    Rcpp (>= 0.12.2),
+    Rsamtools,
+    rtracklayer,
+    stringr,
+    XVector
+LinkingTo: Rcpp
+Suggests:
+    knitr,
+    scatterplot3d,
+    testthat
+VignetteBuilder: knitr
+RoxygenNote: 5.0.1
