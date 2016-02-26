@@ -1,0 +1,46 @@
+# mkuhn, 2016-02-12
+.DS_Store
+
+# History files
+.Rhistory
+.Rapp.history
+
+# Session Data files
+.RData
+
+# Example code in package build process
+*-Ex.R
+
+# RStudio files
+svmod.Rproj
+.Rproj.user/
+.Rproj.user
+
+# internal stuff
+*-internal.*
+*_internal.*
+
+# produced vignettes
+vignettes/*.html
+vignettes/*.pdf
+
+# OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
+.httr-oauth
+
+# compiled stuff from build-process
+src/*.o
+src/*.so
+src/*.dll
+inst/doc/example*
+inst/doc/svmod_overview*
+
+# produced documentation
+man/
+
+# LaTeX-documentation helper files
+*concordance.tex
+*.aux
+*.log
+*.blg
+*.bbl
+
