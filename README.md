@@ -25,3 +25,22 @@ It is an R-package that requires some Bioconductor packages and third-party tool
   * Rsamtools
   * rtracklayer
 
+
+## First Steps
+
+The `svmod` package ships with some R-scripts in its `exec` directory that make the functionality of the package more accessible.
+
+
+### Simulation
+
+1. `sim_patGenerator.R` initiates a simulation by creating tumor and normal genomic background of virtual patients. Somatic SVs will be introduced for each patient according to user settings. NGS reads are simulated in a given coverage and subsequently mapped to the reference.
+2. `sim_extractFeatures.R` extracts features of the local mapping patterns from a simulated patient's mapping. Feature extraction can directly use the information of the simulation where somatic SV reside (`--useSimInfo`) or rely on clipped base screening. Use the former to evaluate only the confirmation step while the latter mimicks the situation of real data when no somatic SV information is available. Feature data is saved to disk as R-dataframe.
+3. `benchmarkLearners.R` trains and tunes different classification methods, namely k-NN, random forest, elastic net, SVM and logistic regression. These classifiers are then evaluated, either by repeatedly subsampling test data or by using the screen-positive regions of the patient as hold-out data.
+
+
+### Real data
+For real patient tumor/normal samples the entry point are mapping files.
+
+1. `real_extractFeatures.R` script runs the screening step and extracts features of local mapping patterns. Consult this script to understand the naming conventions that are in place to identify the tumor and normal mapping BAM-files.
+2. `benchmarkLearners.R` to train, tune and evaluate different learners. See above at the simulation section.
+
