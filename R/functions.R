@@ -18,14 +18,14 @@
 #' @param patIdNbr the patient ID as numeric
 #' @export
 getPatStr <- function(patIdNbr){
-  return(paste0("pat",formatC(patIdNbr, width=5, flag="0")))
+  paste0("pat",formatC(patIdNbr, width=5, flag="0"))
 }
 
 #' Get the patient ID as number from patient ID string
 #' @param patIdStr the patient ID as string
 #' @export
 getPatNbr <- function(patIdStr){
-  return(as.numeric(substr(patIdStr, 4, 8)))
+  as.numeric(substr(patIdStr, 4, 8))
 }
 
 
@@ -55,9 +55,8 @@ getNumberOfLinesUsingWC <- function(txtFile){
   
   wcOutput <- system(paste0("wc -l ", txtFile), intern=TRUE)
   wcOutput.regex <- regexec("[[:digit:]]+", wcOutput)[[1]]
-  nbrLines <- strtoi(substr(wcOutput, start=wcOutput.regex, stop=wcOutput.regex+attr(wcOutput.regex, "match.length")-1), base=10L)
   
-  return(nbrLines)
+  strtoi(substr(wcOutput, start=wcOutput.regex, stop=wcOutput.regex+attr(wcOutput.regex, "match.length")-1), base=10L)
 }
 
 
@@ -494,23 +493,30 @@ subsampleInd <- function(dat.status, train.n.out=NULL, prop.outl=.15){
 
 
 #' Wrapper for read simulation utility.
+#' 
+#' Specify either \code{fCov} or \code{rCount} but not both.
 #' @param fastaFile character. Fasta file with reference sequence to simulate reads from.
 #' @param ngs.prop contains the sequencing settings to be used for the simulation
+#' @param rCount total number of reads/read pairs to be generated
+#' @param fCov the fold of read coverage to be simulated
 #' @param paired logical flag if paired sequencing is requested.
-#' @return logical flag for success
+#' @return logical flag for success status
 readSimulatorWrapper <- function(fastaFile, prefixRead="SIM", prefixFasta, paired=TRUE, ngs.prop=NULL, fCov=NULL, rCount=NULL){
   
   stopifnot( ! (is.null(fCov) && is.null(rCount)), is.null(fCov) || is.null(rCount) ) # exactly one of both is not null!
   
   artOptions <- paste("--noALN", if (paired) "--paired", "--seqSys ", SEQ_SYSTEM, 
-                      if (! is.null(fCov)) "--fcov", fCov, if (! is.null(rCount)) "--rcount", rCount)
+                      if (! is.null(fCov)) paste("--fcov", fCov), if (! is.null(rCount)) paste("--rcount", rCount))
   
   simCommand <- sprintf("%s  %s  --id %s --in %s --out %s --len %d  --mflen %d --sdev %d", 
           ART_EXE, artOptions, prefixRead, fastaFile, file.path(dirname(fastaFile), prefixFasta),
           ngs.prop$read.length, ngs.prop$pe.ins.mean, ngs.prop$pe.ins.sd)
   
   simCall <- system(simCommand, intern=FALSE)
-  if ( simCall == 0L ) logging::loginfo("Reads simulated") else { logging::logerror("Read Simulation FAILED"); return(invisible(FALSE)) }
+  if ( simCall == 0L ) logging::loginfo("Reads simulated") else {
+    logging::logerror("Read Simulation FAILED for with call %s", simCommand)
+    return(invisible(FALSE))
+  }
   
   invisible(TRUE)
 }
@@ -652,7 +658,7 @@ getHammingWindowWeights <- function(n, normalized=TRUE){
 
 #' Graphical exploration of published SV-data from Database of Genome Variation.
 #' @param dgvFile variants from the genome variant database, as an RDS object
-exploreGenomVariants <- function(dgvFile=file.path(BASEDIR, "refGen", "genomVar_hg19_20150723.rds")){
+exploreGenomeVariants <- function(dgvFile=file.path(BASEDIR, "refGen", "genomVar_hg19_20150723.rds")){
   if ( ! file.exists(dgvFile) ){
     logwarn("File %s not found. Sorry.", dgvFile)
     return(invisible(NULL))

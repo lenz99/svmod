@@ -22,6 +22,9 @@ getTargetRegions <- function(targetBedFile=file.path(BASEDIR, "refGen", "TruSeq_
   targetBed <- read.delim(file = targetBedFile, header = FALSE)
   stopifnot( NCOL(targetBed) >= 3L )
   colnames(targetBed)[1L:3L] <- c("chr", "start", "end") #, "id", "width", "strand")
+  
+  # mkuhn, 2016-10-03: drop NA-rows
+  targetBed <- droplevels(targetBed[!is.na(targetBed$start) & ! is.na(targetBed$end), ])
   # BED-file is 0-based, GRanges are 1-based
   targetBed$start <- targetBed$start + 1L
   targetRegions <- GenomicRanges::makeGRangesFromDataFrame(targetBed, ignore.strand = TRUE, keep.extra.columns = FALSE)
@@ -249,7 +252,7 @@ getFeatureDataFromPatient <- function(patId, bamFile_WT, bamFile_MUT, TL=0.9 * .
   coveredRegions <- coveredRegions[lengthFilterInd, ]
   clippedRes_MUT <- clippedRes_MUT[lengthFilterInd, ]
   
-  logging::loginfo("%d covered regions remaining after filtering out covered regions shorter than minimum width.", length(coveredRegions))
+  logging::loginfo("%d covered regions remain after filtering out covered regions shorter than minimum width.", length(coveredRegions))
   stopifnot( NROW(coveredRegions) == NROW(clippedRes_MUT) )
   
   # mkuhn, 2016-01-05: check if we have coverage
@@ -585,7 +588,7 @@ addStatusToTestFromSim <- function(featDat.test, patData, myCHROM, evalMargin, r
   }
   
   # drop stale status columns: I will recreate them
-  featDat.test %<>% dplyr::select_(~-one_of("type" ,"status", "SVtype", "SVlength"))
+  featDat.test %<>% dplyr::select_(~ -one_of("type" ,"status", "SVtype", "SVlength"))
   
   # look into patient data: what was simulated
   # mkuhn, 2016-02-09: keep only the simulated SVs as relevant patData entries
@@ -677,14 +680,14 @@ addStatusToTestFromSim <- function(featDat.test, patData, myCHROM, evalMargin, r
 
 #' Add missing columns for test data of a patient in the Biotec data, based on confirmed FLT3-ITD hits.
 #' 
-#' Only FLT3-ITD is marked here. Other hits are ignored and are not recorded.
+#' Only FLT3-ITD is marked here. Other hits are not known and are not recorded.
 #' @param regionIsMatch flag if whole target region counts as match or if overlap of SV +/- evalMargin is required
 #' @param featNames column names vector of training data
 #' @export
-addStatusToBiotecTest <- function(featDat.test, evalMargin, regionIsMatch=FALSE, featNames) {
+addStatusForFLT3ITD <- function(featDat.test, evalMargin, regionIsMatch=FALSE, featNames) {
   
   flt3CHROM <- "chr13"
-  # use consensus region for all four patients
+  # use consensus region for all four FLT3-ITD patients from manuscript
   FLT3ITD <- GenomicRanges::GRanges(seqnames = flt3CHROM,
                                     ranges = IRanges::IRanges(start = 28608242, end = 28608280 + 66L))
   
@@ -703,7 +706,7 @@ addStatusToBiotecTest <- function(featDat.test, evalMargin, regionIsMatch=FALSE,
   }
   
   # drop stale status columns: I will recreate them
-  featDat.test %<>% dplyr::select_(~-one_of("type" ,"status", "SVtype", "SVlength"))
+  featDat.test %<>% dplyr::select_(~ -one_of("type" ,"status", "SVtype", "SVlength"))
   
   
   # this is the simulated truth (with added evaluation margin or using whole target region)

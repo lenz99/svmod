@@ -355,7 +355,8 @@ evalLearners_OLD <- function(baseDir=BASEDIR, sample.prop, ngs.prop, patIds=NULL
 
 
 #' Prepares the feature data frame for task.
-#' @param strategy how to divide into training and test data
+#' @param data dataframe of features for training and test cases
+#' @param strategy how to divide into training and test data. "pat1" means to use the training data of pat1 and takes rest of simulation as test data
 prepareFeatureData <- function(data, strategy=c("all", "pat1"), doSubSampling=FALSE, subSampling.prop.sSV=NULL, verbose=FALSE){
   strategy <- match.arg(strategy)
   
@@ -479,27 +480,27 @@ makeLearnerList <- function(short=FALSE){
 
 
 
-#' Evaluate some learners on a feature set, based on simulation results.
+#' Evaluate some learners on a feature set.
 #' 
-#' This is a 2nd attempt: started off as a copy from evalLearners(). but has more learners.
-#' 
-#' The feature set from simulation run is specified by the sample- and NGS-properties. It writes out the benchmark object in the corresponding performance/ -directory (if requested).
-#' One needs also to give the margin that was used left and right of the screened or simulated SV-regions for features extraction from the mapping.
+#' The feature data is specified via the \code{sources}-list.
+#' For simulations this will be done via the list-entries:
 #' \describe{
+#'   \item{sample.prop}{sample properties underlying the features}
+#'   \item{ngs.prop}{NGS properties underlying the features}
+#'   \item{patIds}{numeric vector of patient IDs to restrict features to only given patients. Defaults to \code{NULL}, i.e. all available features from any patient.}
 #'   \item{with \code{useSimSVInfo=TRUE}}{the simulated SV-information is directly used, i.e. no SV-screening step is done but use features extracted directly at the simulated SV-locus.}
-#'   \item{with \code{useSimSVInfo=FALSE}}{the SV-screening step has been performed that resulted in screening negative regions that give rise to positive (via SV-injection) and negative training cases.
-#'   The screening positive regions form the test set where the learners naturally need to be evaluated.}
+#'   \item{with \code{useSimSVInfo=FALSE}}{the SV-screening step has been performed that resulted in screening negative regions that give rise to positive (via SV-injection) and negative training cases.}
 #' }
+#' For both, simulation and real data, the list entry \code{margin.bp} specifies the margin size (in bp) that was used for feature extraction (either flanking the exact simulated SV or flanking the screened regions).
+#' In simulations, the margin is part of the feature filename and is used to identify the features to use.
+#'
 #' Patient IDs do not play a role for simulation runs, except you can restrict number of features to come from certain simulation patients.
 #' On real data the algorithm is run per patient ("personalized").
 #' 
-#' The \code{sources}-list defines the feature-data source:
-#' sample.prop sample properties underlying the features
-#' ngs.prop NGS properties underlying the features
-#' patIds numeric vector of patient IDs to restrict features to only given patients. Defaults to \code{NULL}, i.e. all available features from any patient.
-#' margin.bp margin size (in bp) that was used for feature extraction (either flanking the exact simulated SV or flanking the screened regions). The margin is part of the feature filename and is used to identify the features to use.
-#' useSimSVInfo flag. For simulation case: Do we want to use the knowledge of SV-presence and SV-coordinates from simulation for the evaluation? Defaults to \code{FALSE}, i.e. use read coverage and clipped base peaks screening to learn regions where features are extracted.
+#' For both simulated and real patient data, the screening positive regions form the test set where the learners naturally need to be evaluated.
+#' For simulation runs the resulting benchmark object in the corresponding performance/ -directory (if requested).
 #' 
+#' @note This is a 2nd attempt, it started off as a copy from \code{evalLearners_OLD}.
 #' @param sources list that contains information for which data (training and test) to do the evaluation. E.g. \code{isSimulation=} governs if it is simulated data or biotec data
 #' @param k number of sub-sampling iterations for tuning (inner loop). Defaults to 10.
 #' @param tuneMode character. name of supported tuning method
@@ -542,7 +543,7 @@ evalLearners2 <- function(baseDir=BASEDIR, sources=list(isSimulation=TRUE, sampl
   
   
   
-  # Read in data -----
+  # Read in feature data -----
   
   patStr <- ""
   
@@ -566,22 +567,20 @@ evalLearners2 <- function(baseDir=BASEDIR, sources=list(isSimulation=TRUE, sampl
     return(invisible(NULL))
   }
   
-  data <- readRDS(featFile)
-  stopifnot( exists("data"), is.data.frame(data) )  
+  fdata <- readRDS(featFile)
+  stopifnot( exists("fdata"), is.data.frame(fdata) )  
   
   
-    
-    
   
   # mkuhn, 20150504: optional patient filter on feature dataframe (useful only for sim-cases as they have feature file with multiple simulated patients.
   # biotec data is anyway per individual patient
   if ( isTRUE(sources[["isSimulation"]]) && ! is.null(sources[["patIds"]]) && is.numeric(sources[["patIds"]]) && length(sources[["patIds"]]) >= 1L ){
-    data <- dplyr::filter_(data, ~patId %in% sources[["patIds"]])
-    logging::loginfo("Restricted to %d features to given patients.", NROW(data))
+    fdata <- dplyr::filter_(fdata, ~patId %in% sources[["patIds"]])
+    logging::loginfo("Restricted to %d features to given patients.", NROW(fdata))
   }
   
   # check if patient info is available within feature data
-  if ( ! (is.data.frame(data) && NROW(data) >= 1L && "status" %in% names(data) && is.factor(data$status) && nlevels(data$status) == 2L) ){
+  if ( ! (is.data.frame(fdata) && NROW(fdata) >= 1L && "status" %in% names(fdata) && is.factor(fdata$status) && nlevels(fdata$status) == 2L) ){
     logging::logwarn("Something wrong with feature data in %s. Status missing?", featFile)
     return(invisible(NULL))
   }
@@ -594,7 +593,7 @@ evalLearners2 <- function(baseDir=BASEDIR, sources=list(isSimulation=TRUE, sampl
   # Task ----
   
   # prepare data for learner
-  taskList <- prepareFeatureData(data, doSubSampling = doSubSampling, subSampling.prop.sSV = prop.sSV)
+  taskList <- prepareFeatureData(fdata, doSubSampling = doSubSampling, subSampling.prop.sSV = prop.sSV)
   somSV_Task <- taskList[["task"]]
   trainInd <- taskList[["trainInd"]]
   testInd <- taskList[["testInd"]]  

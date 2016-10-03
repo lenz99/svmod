@@ -5,7 +5,8 @@
 # It uses the installed version of svmod package
 #
 # INput: mapping (BAM file) for [N]- and [T]-samples of real patients
-# OUTput: feature data as RDS-object
+# OUTput: feature data as RDS-object. Learners can be trained on the features of the training data and evaluated on the test data (see benchmarkLearners.R)
+
 
 
 # for quick setup
@@ -44,10 +45,13 @@ library(IRanges, quietly = TRUE)
 myOptions <- list(
   make_option(c("-v", "--devmode"), action="store_true", help="svmod is installed in dev-mode!", default=FALSE),
   make_option(c("-t", "--testrun"), action="store_true", help="Do only a test run. Do not save features to disk.", default=FALSE),
+  make_option(c("-a", "--agilent"), action="store_true", help="Choose Agilent SureSelect_v5_xt2 Exome enrichment kit (instead of TruSea).", default=FALSE),
   make_option(c("-m", "--margin"), type="integer", help="Use what margin left and right of candidate SV region for feature extraction [%default bp]", default=25L),
   make_option(c("-p", "--parallel"), type="integer", help="Number of Cores to use. 0: automatic, 1: no parallel. [%default]", default=2L),
   make_option(c("-x", "--randomSeed"), type="integer", help="Set random seed [%default]", default = 1234L),
-  make_option(c("-r", "--maxCovRegion"), type="integer", help="Maximal number of covered regions per patient. 0 means no restriction. For now only in use when not using simulation. [%default]", default=0L)
+  make_option(c("-r", "--maxCovRegion"), type="integer", help="Maximal number of covered regions per patient. 0 means no restriction. For now only in use when not using simulation. [%default]", default=0L),
+  # think to make that an argument (not an option)
+  make_option(c("-d", "--directory"), type="character", help="Name of directory where mapping BAM-files are stored. [%default]", default = "biotec")
 )
 
 
@@ -97,7 +101,9 @@ library(svmod, quietly = FALSE)
 svmod::setupParallel(cpus = nbrCores)
 
 
-realPatDir <- file.path(baseDir, "biotec")
+mapDir <- given_opts$directory
+stopifnot( is.character(mapDir), nzchar(mapDir) )
+realPatDir <- file.path(baseDir, mapDir)
 stopifnot( file.exists(realPatDir) )
 
 patBams <- list.files(path = realPatDir, pattern = paste0(patIdentifier, ".*dedup.bam$"), full.names = TRUE)
@@ -120,6 +126,8 @@ mySVmean <- 150
 mySVsd <- 15
 
 
+
+
 # build feature dataframe (train and test data) -----
 
 
@@ -131,8 +139,15 @@ pat.t.bamFile <- grep(pattern = "_T_", patBams, value=TRUE)
 stopifnot( length(pat.n.bamFile) == 1L, length(pat.t.bamFile) == 1L )
 stopifnot( checkFile(pat.n.bamFile), checkFile(pat.t.bamFile) )
 
+# kuhnmat, 2016-10-03: parameterize the target file
+myTargetBedFile <- if (isTRUE(given_opts$agilent)) file.path(BASEDIR, "refGen", "SureSelect_v5_xt2.bed") else
+  file.path(BASEDIR, "refGen", "TruSeq_exome_targeted_regions.hg19.bed")
+
+
 featDat.pat <- getFeatureDataFromPatient(patId = patIdentifier, bamFile_WT = pat.n.bamFile, bamFile_MUT = pat.t.bamFile,
-                                         chrom = myCHROM, localMappingMargin=1e5, propPos.train=.5, margin.bp = myMargin,
+                                         chrom = myCHROM,
+                                         targetBedFile = myTargetBedFile,
+                                         localMappingMargin=1e5, propPos.train=.5, margin.bp = myMargin,
                                          SVlength_mean = mySVmean, SVlength_sd = mySVsd,
                                          maxNbrCoveredRegions = myMaxNbrCovReg, saveIntermediate=TRUE, useIntermediate=TRUE)
 
@@ -140,7 +155,10 @@ if ( is.null(featDat.pat) ){
   logging::logwarn("No feature data for patient %s", patIdentifier)
 }
 
-logging::loginfo("Gathered feature data featDat.pat as %s with lengths %s.", class(featDat.pat), paste(lengths(featDat.pat), collapse="-"))
+logging::loginfo("Gathered feature data 'featDat.pat' as %s with components %s and with lengths %s.",
+                 class(featDat.pat), paste(names(featDat.pat), collapse="-"),
+                 paste(lengths(featDat.pat), collapse="-"))
+
 # ## TESTING mkuhn, 2016-02-02
 # featureDir <- file.path(realPatDir, "feature")
 # try(dir.create(featureDir, showWarnings = FALSE, recursive = TRUE), silent = TRUE)
@@ -160,11 +178,12 @@ logging::loginfo("Features of training data has first columns: %s", paste(head(n
 
 
 #### myMargin is re-used here for estimating the status on test data
-features.test <- addStatusToBiotecTest(featDat.test = features.test0, evalMargin = myMargin, regionIsMatch = FALSE, featNames = names(features.train))
+features.test <- addStatusForFLT3ITD(featDat.test = features.test0, evalMargin = myMargin, regionIsMatch = FALSE, featNames = names(features.train))
 logging::loginfo("Added status columns to test data for %d test data of patient %s.", NROW(features.test0), patIdentifier)
 
 featureDat <- rbind(features.train, features.test)
-logging::loginfo("Combined train/test featureDat is a %s of length %d with %d rows (%d test cases).", class(featureDat), length(featureDat), NROW(featureDat), sum(featureDat$type == 'test', na.rm = TRUE))
+logging::loginfo("Combined train/test featureDat is a %s of length %d with %d rows (%d test cases).",
+                 class(featureDat), length(featureDat), NROW(featureDat), sum(featureDat$type == 'test', na.rm = TRUE))
 
 
 if (isTRUE(given_opts$testrun)){

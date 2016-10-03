@@ -164,7 +164,7 @@ getContextSeq <- function(sv, gr) {
 
 
 
-#' Find real first position of mapped reads, also considering clipped bases.
+#' Find real first position of mapped reads, also considering soft-clipped bases.
 #' 
 #' Care should be taken to only give reads that are really mapped (where pos and cigar string has a real meaning)
 #' @param cigarStr character vector

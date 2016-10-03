@@ -8,7 +8,9 @@
 # It uses the installed version of svmod package
 #
 # INput: simulated patient data (mapping (BAM file) for [N]- and [T]-samples corresponding to coverage-tumorload simulation)
-# OUTput: feature data as RDS-object (while keeping old feature data)
+# OUTput: feature data as RDS-object (while keeping old feature data). Learners can be trained on the features of the training data and evaluated on the test data (see benchmarkLearners.R)
+#
+# 
 
 
 # for quick setup

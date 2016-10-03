@@ -1,8 +1,8 @@
 Package: svmod
 Type: Package
 Title: Calling somatic SVs in exome DNA-sequencing data (SV2 version)
-Version: 0.6.19
-Date: 2016-02-11
+Version: 0.6.24
+Date: 2016-12-21
 Author: Matthias Kuhn
 Maintainer: Matthias Kuhn <matthias.kuhn@tu-dresden.de>
 Description: Small structural variations (SV) are genetic mutations that
@@ -33,6 +33,7 @@ Imports:
     stringr,
     XVector
 LinkingTo: Rcpp
+SystemRequirements: C++11
 Suggests:
     knitr,
     scatterplot3d,

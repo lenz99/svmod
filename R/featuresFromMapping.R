@@ -125,9 +125,9 @@ getPatientMappingInfo <- function(bamFile_WT, bamFile_MUT, chrom=CHROM, YIELD_SI
     yield <- function(x) GenomicAlignments::readGAlignments(x, param=Rsamtools::ScanBamParam(flag = Rsamtools::scanBamFlag(isSecondaryAlignment = FALSE))) #c("qwidth", "cigar")) )
     map <- function(x) {
       cig <- GenomicAlignments::cigar(x);
-      startClipped <- cig %>% stringr::str_extract(pattern = "^[[:digit:]]+S") %>% stringr::str_replace(pattern = "S", replacement = "") %>% as.numeric 
+      startClipped <- cig %>% stringr::str_extract(pattern = "^[[:digit:]]+[SH]") %>% stringr::str_replace(pattern = "[SH]", replacement = "") %>% as.numeric 
       startClipped[is.na(startClipped)] <- 0L
-      endClipped <- cig %>% stringr::str_extract(pattern = "[[:digit:]]+S$") %>% stringr::str_replace(pattern = "S", replacement = "") %>% as.numeric
+      endClipped <- cig %>% stringr::str_extract(pattern = "[[:digit:]]+[SH]$") %>% stringr::str_replace(pattern = "[SH]", replacement = "") %>% as.numeric
       endClipped[is.na(endClipped)] <- 0L
       # sort starts with smallest values
       clippedProp <- sort((startClipped + endClipped) / GenomicAlignments::qwidth(x))
@@ -474,8 +474,9 @@ getFeaturesFromMapping <- function (patId, bamFile_WT, bamFile_MUT, patMappingIn
   cigar.T <- as.character(mapping.reg.regular.T$cigar)
   
   # no hard-clipping  (see BWA MEM -Y option)
-  stopifnot( ! any(grepl("H", cigar.N)) )
-  stopifnot( ! any(grepl("H", cigar.T)) )
+  ###mkuhn, 2016-10-03: allow for H, use H also for counting clipped bases
+  ###stopifnot( ! any(grepl("H", cigar.N)) )
+  ###stopifnot( ! any(grepl("H", cigar.T)) )
   
   
   # cigar string for Q1-mapped regular reads:
@@ -483,12 +484,12 @@ getFeaturesFromMapping <- function (patId, bamFile_WT, bamFile_MUT, patMappingIn
   cigar.q1.T <- cigar.T[which(mapping.reg.regular.T$mapq >= 1L)]
   
   # proportion of clipped reads within the Q1-reads
-  feat.clipped.q1.prop.1 <- if (length(cigar.q1.N) > 0L) sum(grepl("S", x=cigar.q1.N, fixed=TRUE)) / length(cigar.q1.N) else NA
-  feat.clipped.q1.prop.d <- if (length(cigar.q1.T) > 0L) sum(grepl("S", x=cigar.q1.T, fixed=TRUE)) / length(cigar.q1.T) - feat.clipped.q1.prop.1 else NA
+  feat.clipped.q1.prop.1 <- if (length(cigar.q1.N) > 0L) sum(grepl("[SH]", x=cigar.q1.N, fixed=FALSE)) / length(cigar.q1.N) else NA
+  feat.clipped.q1.prop.d <- if (length(cigar.q1.T) > 0L) sum(grepl("[SH]", x=cigar.q1.T, fixed=FALSE)) / length(cigar.q1.T) - feat.clipped.q1.prop.1 else NA
   
   # sum of all clipped S-bases within the Q1-reads (anywhere in the read)
-  nbrS.q1.cigar.N <- sapply( stringr::str_extract_all(cigar.q1.N, pattern="[[:digit:]]+S"), function(x) sum(as.numeric(stringr::str_sub(x, end=-2L))) )
-  nbrS.q1.cigar.T <- sapply( stringr::str_extract_all(cigar.q1.T, pattern="[[:digit:]]+S"), function(x) sum(as.numeric(stringr::str_sub(x, end=-2L))) )
+  nbrS.q1.cigar.N <- sapply( stringr::str_extract_all(cigar.q1.N, pattern="[[:digit:]]+[SH]"), function(x) sum(as.numeric(stringr::str_sub(x, end=-2L))) )
+  nbrS.q1.cigar.T <- sapply( stringr::str_extract_all(cigar.q1.T, pattern="[[:digit:]]+[SH]"), function(x) sum(as.numeric(stringr::str_sub(x, end=-2L))) )
   
   # number of all S-bases relative to number of Q1-read entries
   feat.clipped.q1.bases.1 <- if (length(cigar.q1.N) > 0L)  sum(nbrS.q1.cigar.N, na.rm=TRUE) / length(cigar.q1.N) else NA

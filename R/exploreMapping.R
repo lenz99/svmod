@@ -43,12 +43,13 @@ exploreClipping_BAM <- function(bamFile, chrom="chr5", startPos=1234567, endPos=
   stopifnot( all( diff(mapping$pos) >= 0L ) )
   
   # no hard-clipping  (see BWA MEM -Y option)
-  stopifnot( ! any(grepl("H", mapping$cigar)) )
+  ###mkuhn, 2016-10-03: allow for H, use H also for counting clipped bases
+  ###stopifnot( ! any(grepl("H", mapping$cigar)) )
   
   
   # sum of clipped bases within the Q1-reads, from either end
-  mapping$Sbases_5p <- as.numeric(str_sub(str_extract(mapping$cigar, pattern = "^[[:digit:]]+S"), end=-2L))
-  mapping$Sbases_3p <- as.numeric(str_sub(str_extract(mapping$cigar, pattern = "[[:digit:]]+S$"), end=-2L))
+  mapping$Sbases_5p <- as.numeric(str_sub(str_extract(mapping$cigar, pattern = "^[[:digit:]]+[SH]"), end=-2L))
+  mapping$Sbases_3p <- as.numeric(str_sub(str_extract(mapping$cigar, pattern = "[[:digit:]]+[SH]$"), end=-2L))
   
   mapping$Sbases_5p[is.na(mapping$Sbases_5p)] <- 0L
   mapping$Sbases_3p[is.na(mapping$Sbases_3p)] <- 0L

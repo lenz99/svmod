@@ -85,8 +85,8 @@ findCoveredRegionsInTarget <- function(bamFile_WT, bamFile_MUT, chrom=CHROM,
 bamReadToClipPos <- function(pos, cigar){  #, nbrS5p, nbrS3p
   
   # sum of clipped bases per given read, parsed from CIGAR string, separate for either ends (5p and 3p)
-  nbrS5p <- as.integer(stringr::str_sub(stringr::str_extract(cigar, pattern = "^[[:digit:]]+S"), end=-2L)) #5' = left-most clipped bases
-  nbrS3p <- as.integer(stringr::str_sub(stringr::str_extract(cigar, pattern = "[[:digit:]]+S$"), end=-2L)) #3'= right-most clipped bases
+  nbrS5p <- as.integer(stringr::str_sub(stringr::str_extract(cigar, pattern = "^[[:digit:]]+[SH]"), end=-2L)) #5' = left-most clipped bases
+  nbrS3p <- as.integer(stringr::str_sub(stringr::str_extract(cigar, pattern = "[[:digit:]]+[SH]$"), end=-2L)) #3'= right-most clipped bases
   
   nbrS5p[is.na(nbrS5p)] <- 0L
   nbrS3p[is.na(nbrS3p)] <- 0L
@@ -221,7 +221,8 @@ getClippedBasePositions <- function(bamFile, chrom=CHROM, targetStartPos, target
   stopifnot( all( diff(mapping$pos) >= 0 ) )
   
   # no hard-clipping  (see BWA MEM -Y option)
-  stopifnot( ! any(grepl("H", mapping$cigar)) )
+  ###mkuhn, 2016-10-03: allow for H, use H also for counting clipped bases
+  ###stopifnot( ! any(grepl("H", mapping$cigar)) )
   
   
   # # sum of clipped bases within the Q1-reads, read from CIGAR string, separate for either ends, 5p and 3p
@@ -258,7 +259,7 @@ getClippedBasePositions <- function(bamFile, chrom=CHROM, targetStartPos, target
   if ( length(cov.samtools) >= 1L ){
     
     # ZZZ assuming a single fixed chromosome for the region
-    stopifnot(  length(chrom) == 1L && identical(chrom, unique(stringr::str_replace(cov.samtools, "\t.*", ""))) )  
+    stopifnot(  length(chrom) == 1L,  identical(chrom, unique(stringr::str_replace(cov.samtools, "\t.*", ""))) )
     
     # keep position and coverage, but fill zero cov positions
     cov.raw <- matrix(as.numeric(unlist(strsplit(stringr::str_replace(cov.samtools, paste0("^", chrom, "\t"), replacement = ""), split="\t", fixed=TRUE))),

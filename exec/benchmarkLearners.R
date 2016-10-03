@@ -44,7 +44,7 @@ library(IRanges, quietly = TRUE)
 
 
 myOptions <- list(
-  make_option(c("--biotec"), action = "store_true", help = "Flag if given patient is patient ID from Biotec"),
+  make_option(c("--biotec"), action = "store_true", help = "Flag if given patient is patient ID from Biotec sequencing run"),
   make_option(c("--patId"), type = "integer", help = "Take features from this specified single patient ID. In particular useful for single patient analysis (for instance for real data)"),
   make_option(c("-c", "--coverage"), type="integer", help="Coverage in sampling. [%default]", default=60L),
   make_option(c("-l", "--tumorLoad"), type="integer", help="Tumorload [%] in sampling. [%default]", default=90L),
@@ -59,7 +59,7 @@ myOptions <- list(
 )
 
 
-myParser <- OptionParser(usage="%prog [options]", description="Run benchmark of machine learning algorithms on simulated or biotec data", option_list=myOptions)
+myParser <- OptionParser(usage="%prog [options]", description="Run benchmark of machine learning algorithms on simulated or real data", option_list=myOptions)
 parsed_args <- parse_args(myParser, positional_arguments=TRUE)
 
 given_opts <- parsed_args$options
