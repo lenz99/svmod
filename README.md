@@ -1,6 +1,6 @@
-# svmod: find small somatic structural variations (SV) in tumor/normal exome data
+# Find small somatic structural variants in tumor/normal exome data
 
-`svmod` implements a machine-learning approach to SV-finding, more specifically, it is about small (50-300bp) somatic (tumor-only) SVs that are detectable in exome sequencing data. You can find more on this approach at [our publication](http://rdcu.be/niI9).
+Structural variants (SV) are genomic variation at the DNA-level that affects more than 50 nt. Typically, SVs range in size from one kilobase up to few megabases. `svmod` implements a machine-learning approach to SV-finding, more specifically, it is about small (50-300bp) somatic (tumor-only) SVs that are detectable in exome sequencing data. You can find more on this approach at [our publication](http://rdcu.be/niI9).
 
 Currently, `svmod` is still in a prototype stage with many rough edges (see below).. So, you have been warned!
 
@@ -48,4 +48,4 @@ For real patient tumor/normal samples the entry point are mapping files.
 
 ## Known bugs/limitations
 1. No clean interface yet to run `svmod`. In particular for real patient data you have to fiddle with script internas.
-2. NGS-read simulation is hard-coded to use the Illumina HiSeq 2000. Hence, the reads are limited to 100bp.
+2. NGS-read simulation is hard-coded to use the Illumina HiSeq 2000. Hence, the simulated reads are limited to 100bp.
